@@ -1,0 +1,158 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CheatTable CheatEngineTableVersion="42">
+  <CheatEntries>
+    <CheatEntry>
+      <ID>1</ID>
+      <Description>"ABH - SERVER (вкл/выкл)"</Description>
+      <VariableType>Auto Assembler Script</VariableType>
+      <AssemblerScript>[ENABLE]
+{$lua}
+do
+  local base = getAddress('server.dll')
+  local msg = ''
+  if base == nil or base == 0 then
+    msg = 'server.dll not found - attach to synergy.exe first'
+  else
+    local size = getModuleSize('server.dll')
+    local l = AOBScan('F3 0F 11 40 48 A1 ?? ?? ?? ?? 83 78 14 01 0F 84 39 09 00 00 8B 4E 04')
+    local found = nil
+    if l ~= nil then
+      for i = 0, l.Count - 1 do
+        local a = tonumber(l[i], 16)
+        if a ~= nil and a &gt;= base and a &lt; base + size then
+          if found ~= nil then found = -1 break end
+          found = a
+        end
+      end
+      l.destroy()
+    end
+    if found == nil then
+      msg = 'gate not found - wrong game build? run check_abh.py'
+    elseif found == -1 then
+      msg = 'ambiguous: several matches, NOT patched (report this)'
+    else
+      writeBytes(found + 14, 0xE9, 0x3A, 0x09, 0x00, 0x00, 0x90)
+      print(string.format('ABH SERVER enabled at %X', found + 14))
+    end
+  end
+  if msg ~= '' then showMessage('ABH SERVER enable: ' .. msg) end
+end
+{$asm}
+[DISABLE]
+{$lua}
+do
+  local base = getAddress('server.dll')
+  local msg = ''
+  if base == nil or base == 0 then
+    msg = 'server.dll not found - attach to synergy.exe first'
+  else
+    local size = getModuleSize('server.dll')
+    local l = AOBScan('F3 0F 11 40 48 A1 ?? ?? ?? ?? 83 78 14 01')
+    local fixed = 0
+    if l ~= nil then
+      for i = 0, l.Count - 1 do
+        local a = tonumber(l[i], 16)
+        if a ~= nil and a &gt;= base and a &lt; base + size then
+          local op = readInteger(a + 14, 1, false) % 256
+          if op == 0xE9 then
+            local s0 = readInteger(a + 20, 1, false) % 256
+            local s1 = readInteger(a + 21, 1, false) % 256
+            if s0 == 0x8B and s1 == 0x4E then
+              writeBytes(a + 14, 0x0F, 0x84, 0x39, 0x09, 0x00, 0x00)
+              fixed = fixed + 1
+            end
+          end
+        end
+      end
+      l.destroy()
+    end
+    if fixed == 0 then
+      msg = 'no patched gate found (already vanilla?)'
+    else
+      print('ABH SERVER disabled, gates restored: ' .. tostring(fixed))
+    end
+  end
+  if msg ~= '' then showMessage('ABH SERVER disable: ' .. msg) end
+end
+{$asm}
+</AssemblerScript>
+    </CheatEntry>
+    <CheatEntry>
+      <ID>2</ID>
+      <Description>"ABH - CLIENT predict (вкл/выкл)"</Description>
+      <VariableType>Auto Assembler Script</VariableType>
+      <AssemblerScript>[ENABLE]
+{$lua}
+do
+  local base = getAddress('client.dll')
+  local msg = ''
+  if base == nil or base == 0 then
+    msg = 'client.dll not found - attach to synergy.exe first'
+  else
+    local size = getModuleSize('client.dll')
+    local l = AOBScan('F3 0F 11 40 48 A1 ?? ?? ?? ?? 83 78 14 01 0F 84 A5 04 00 00 89 F1')
+    local found = nil
+    if l ~= nil then
+      for i = 0, l.Count - 1 do
+        local a = tonumber(l[i], 16)
+        if a ~= nil and a &gt;= base and a &lt; base + size then
+          if found ~= nil then found = -1 break end
+          found = a
+        end
+      end
+      l.destroy()
+    end
+    if found == nil then
+      msg = 'gate not found - wrong game build? run check_abh.py'
+    elseif found == -1 then
+      msg = 'ambiguous: several matches, NOT patched (report this)'
+    else
+      writeBytes(found + 14, 0xE9, 0xA6, 0x04, 0x00, 0x00, 0x90)
+      print(string.format('ABH CLIENT enabled at %X', found + 14))
+    end
+  end
+  if msg ~= '' then showMessage('ABH CLIENT enable: ' .. msg) end
+end
+{$asm}
+[DISABLE]
+{$lua}
+do
+  local base = getAddress('client.dll')
+  local msg = ''
+  if base == nil or base == 0 then
+    msg = 'client.dll not found - attach to synergy.exe first'
+  else
+    local size = getModuleSize('client.dll')
+    local l = AOBScan('F3 0F 11 40 48 A1 ?? ?? ?? ?? 83 78 14 01')
+    local fixed = 0
+    if l ~= nil then
+      for i = 0, l.Count - 1 do
+        local a = tonumber(l[i], 16)
+        if a ~= nil and a &gt;= base and a &lt; base + size then
+          local op = readInteger(a + 14, 1, false) % 256
+          if op == 0xE9 then
+            local s0 = readInteger(a + 20, 1, false) % 256
+            local s1 = readInteger(a + 21, 1, false) % 256
+            if s0 == 0x89 and s1 == 0xF1 then
+              writeBytes(a + 14, 0x0F, 0x84, 0xA5, 0x04, 0x00, 0x00)
+              fixed = fixed + 1
+            end
+          end
+        end
+      end
+      l.destroy()
+    end
+    if fixed == 0 then
+      msg = 'no patched gate found (already vanilla?)'
+    else
+      print('ABH CLIENT disabled, gates restored: ' .. tostring(fixed))
+    end
+  end
+  if msg ~= '' then showMessage('ABH CLIENT disable: ' .. msg) end
+end
+{$asm}
+</AssemblerScript>
+    </CheatEntry>
+  </CheatEntries>
+  <UserdefinedSymbols/>
+</CheatTable>
